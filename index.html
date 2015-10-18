@@ -13,8 +13,8 @@
 			#canvasContainer {
 				margin-top: 30px;
 				margin-left: 50px;
-				width: 400px;
-				height:400px;
+				width: 800px;
+				height:600px;
 				border:slateblue 1px solid;
 			}
 		</style>
@@ -45,6 +45,9 @@
 		<script type="text/javascript" src="js/Monitor/Control.js"></script>
 		<script type="text/javascript" src="js/Monitor/Control/DragPan.js"></script>
 		<script type="text/javascript" src="js/Monitor/Control/ModifyFeature.js"></script>
+		
+		<!-- 组态控件 -->
+		<script type="text/javascript" src="js/Ext/Geometry/DLBiaoPan.js"></script>
 	</head>
 	<body>
 		<div id="canvasContainer">
@@ -59,45 +62,15 @@
 			map.addControl(modifyFeature);
 			modifyFeature.activate();
 			
-			{
-				
-				var pen = new Monitor.Pen({
-					fill: "red",
-					stroke: "blue",
-					strokeThickness: 2
-				});
-		
-				var rectangle = new Monitor.Geometry.Rectangle({
-					x: 50,
-					y: 50,
-					width: 150,
-					height: 150,
-					pen: pen
-				});
-				
-				var feature = new Monitor.Feature.Vector(rectangle);
-				
-				layer.addFeatures(feature);
-			}
+			var dlbiaopanFeature1 = new Monitor.Feature.Vector(new DLBiaoPan({
+				value: 30, x: 50, y: 50,width: 180,height: 180
+			}));
 			
-			{
-				var pen = new Monitor.Pen({
-					stroke: "orange",
-					strokeThickness: 5
-				});
-				
-				var rectangle = new Monitor.Geometry.Rectangle({
-					x: 100,
-					y: 100,
-					width: 200,
-					height: 200,
-					pen: pen
-				});
-				
-				var feature = new Monitor.Feature.Vector(rectangle);
-				
-				layer.addFeatures(feature);
-			}
+			
+			var dlbiaopanFeature2 = new Monitor.Feature.Vector(new DLBiaoPan({
+				value: 68, x: 350, y:350 ,width: 100,height: 100
+			}));
+			layer.addFeatures([dlbiaopanFeature1, dlbiaopanFeature2]);
 			
 		</script>
 	</body>
