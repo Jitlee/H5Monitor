@@ -4,66 +4,99 @@
 		<meta charset="utf-8" />
 		<title>机房监控演示</title>
 		<style type="text/css">
-			
+			body, html {
+				width:100%;
+				height:100%;
+				padding:0;
+				margin:0;
+			}
+			#canvasContainer {
+				margin-top: 30px;
+				margin-left: 50px;
+				width: 400px;
+				height:400px;
+				border:slateblue 1px solid;
+			}
 		</style>
+		<script type="text/javascript" src="js/Monitor/SingleFile.js"></script>
+		<script type="text/javascript" src="js/Monitor/BaseTypes.js"></script>
+		<script type="text/javascript" src="js/Monitor/Util.js"></script>
+		<script type="text/javascript" src="js/Monitor/BaseTypes/Class.js"></script>
+		<script type="text/javascript" src="js/Monitor/BaseTypes/Element.js"></script>
+		<script type="text/javascript" src="js/Monitor/Events.js"></script>
+		
+		<script type="text/javascript" src="js/Monitor/Map.js"></script>
+		
+		<script type="text/javascript" src="js/Monitor/Render.js"></script>
+		<script type="text/javascript" src="js/Monitor/Pen.js"></script>
+		
+		<script type="text/javascript" src="js/Monitor/Layer.js"></script>
+		<script type="text/javascript" src="js/Monitor/Layer/Vector.js"></script>
+		
+		<script type="text/javascript" src="js/Monitor/Feature.js"></script>
+		<script type="text/javascript" src="js/Monitor/Feature/Vector.js"></script>
+		
+		<script type="text/javascript" src="js/Monitor/Geometry.js"></script>
+		<script type="text/javascript" src="js/Monitor/Geometry/Rectangle.js"></script>
+		
+		<script type="text/javascript" src="js/Monitor/Handler.js"></script>
+		<script type="text/javascript" src="js/Monitor/Handler/Drag.js"></script>
+		
+		<script type="text/javascript" src="js/Monitor/Control.js"></script>
+		<script type="text/javascript" src="js/Monitor/Control/DragPan.js"></script>
+		<script type="text/javascript" src="js/Monitor/Control/ModifyFeature.js"></script>
 	</head>
 	<body>
+		<div id="canvasContainer">
+		</div>
 		<script type="text/javascript">
-			var Monitor = {};
 			
-			Monitor.Class = function() {
-				var len = arguments.length;
-			    var P = arguments[0];
-			    var F = arguments[len-1];
+			var map = new Monitor.Map("canvasContainer");
+			var layer = new Monitor.Layer.Vector("矢量图层");
+			map.addLayer(layer);
 			
-			    var C = typeof F.init == "function" ?
-			        F.init :
-			        function(){ P.prototype.init.apply(this, arguments); };
+			var modifyFeature = new Monitor.Control.ModifyFeature(layer);
+			map.addControl(modifyFeature);
+			modifyFeature.activate();
 			
-			    if (len > 1) {
-			        var newArgs = [C, P].concat(
-			                Array.prototype.slice.call(arguments).slice(1, len-1), F);
-			        Monitor.inherit.apply(null, newArgs);
-			    } else {
-			        C.prototype = F;
-			    }
-			    return C;
+			{
+				
+				var pen = new Monitor.Pen({
+					fill: "red",
+					stroke: "blue",
+					strokeThickness: 2
+				});
+		
+				var rectangle = new Monitor.Geometry.Rectangle({
+					x: 50,
+					y: 50,
+					width: 150,
+					height: 150,
+					pen: pen
+				});
+				
+				var feature = new Monitor.Feature.Vector(rectangle);
+				
+				layer.addFeatures(feature);
 			}
 			
-			Monitor.inherit = function(C, P) {
-				var F = function() {};
-				F.prototype = P.prototype;
-				C.prototype = new F;
-				var i, l, o;
-				for(i=2, l=arguments.length; i<l; i++) {
-					o = arguments[i];
-				    if(typeof o === "function") {
-				    		o = o.prototype;
-				    }
-				    Monitor.Util.extend(C.prototype, o);
-				}
-			}
-			
-			Monitor.Util = Monitor.Util || {};
-			Monitor.Util.extend = function(destination, source) {
-			    destination = destination || {};
-			    if (source) {
-			        for (var property in source) {
-			            var value = source[property];
-			            if (value !== undefined) {
-			                destination[property] = value;
-			            }
-			        }
-			        
-			        var sourceIsEvt = typeof window.Event == "function"
-			                          && source instanceof window.Event;
-			
-			        if (!sourceIsEvt
-			           && source.hasOwnProperty && source.hasOwnProperty("toString")) {
-			            destination.toString = source.toString;
-			        }
-			    }
-			    return destination;
+			{
+				var pen = new Monitor.Pen({
+					stroke: "orange",
+					strokeThickness: 5
+				});
+				
+				var rectangle = new Monitor.Geometry.Rectangle({
+					x: 100,
+					y: 100,
+					width: 200,
+					height: 200,
+					pen: pen
+				});
+				
+				var feature = new Monitor.Feature.Vector(rectangle);
+				
+				layer.addFeatures(feature);
 			}
 			
 		</script>

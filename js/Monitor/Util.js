@@ -1,3 +1,16 @@
+Monitor.Util = Monitor.Util || {};
+
+Monitor.Util.lastSeqID = 0;
+Monitor.Util.createUniqueID = function(prefix) {
+    if (prefix == null) {
+        prefix = "id_";
+    } else {
+        prefix = prefix.replace(Monitor.Util.dotless, "_");
+    }
+    Monitor.Util.lastSeqID += 1; 
+    return prefix + Monitor.Util.lastSeqID;        
+};
+
 Monitor.Util.applyDefaults = function (to, from) {
     to = to || {};
     var fromIsEvt = typeof window.Event == "function"
@@ -150,4 +163,113 @@ Monitor.Util.isEquivalentUrl = function(url1, url2, options) {
     }
     
     return true;
+};
+
+Monitor.IS_GECKO = (function() {
+    var ua = navigator.userAgent.toLowerCase();
+    return ua.indexOf("webkit") == -1 && ua.indexOf("gecko") != -1;
+})();
+
+Monitor.Util.pagePosition =  function(forElement) {
+    var pos = [0, 0];
+    var viewportElement = Monitor.Util.getViewportElement();
+    if (!forElement || forElement == window || forElement == viewportElement) {
+        return pos;
+    }
+    var BUGGY_GECKO_BOX_OBJECT =
+        Monitor.IS_GECKO && document.getBoxObjectFor &&
+        Monitor.Element.getStyle(forElement, 'position') == 'absolute' &&
+        (forElement.style.top == '' || forElement.style.left == '');
+
+    var parent = null;
+    var box;
+
+    if (forElement.getBoundingClientRect) { // IE
+        box = forElement.getBoundingClientRect();
+        var scrollTop = window.pageYOffset || viewportElement.scrollTop;
+        var scrollLeft = window.pageXOffset || viewportElement.scrollLeft;
+        
+        pos[0] = box.left + scrollLeft;
+        pos[1] = box.top + scrollTop;
+
+    } else if (document.getBoxObjectFor && !BUGGY_GECKO_BOX_OBJECT) { // gecko
+        box = document.getBoxObjectFor(forElement);
+        var vpBox = document.getBoxObjectFor(viewportElement);
+        pos[0] = box.screenX - vpBox.screenX;
+        pos[1] = box.screenY - vpBox.screenY;
+
+    } else { // safari/opera
+        pos[0] = forElement.offsetLeft;
+        pos[1] = forElement.offsetTop;
+        parent = forElement.offsetParent;
+        if (parent != forElement) {
+            while (parent) {
+                pos[0] += parent.offsetLeft;
+                pos[1] += parent.offsetTop;
+                parent = parent.offsetParent;
+            }
+        }
+
+        var browser = Monitor.BROWSER_NAME;
+
+        if (browser == "opera" || (browser == "safari" &&
+              Monitor.Element.getStyle(forElement, 'position') == 'absolute')) {
+            pos[1] -= document.body.offsetTop;
+        }
+
+        parent = forElement.offsetParent;
+        while (parent && parent != document.body) {
+            pos[0] -= parent.scrollLeft;
+            if (browser != "opera" || parent.tagName != 'TR') {
+                pos[1] -= parent.scrollTop;
+            }
+            parent = parent.offsetParent;
+        }
+    }
+    
+    return pos;
+};
+
+Monitor.Util.indexOf = function(array, obj) {
+    if (typeof array.indexOf == "function") {
+        return array.indexOf(obj);
+    } else {
+        for (var i = 0, len = array.length; i < len; i++) {
+            if (array[i] == obj) {
+                return i;
+            }
+        }
+        return -1;   
+    }
+};
+
+Monitor.Util.getElement = function() {
+    var elements = [];
+
+    for (var i=0, len=arguments.length; i<len; i++) {
+        var element = arguments[i];
+        if (typeof element == 'string') {
+            element = document.getElementById(element);
+        }
+        if (arguments.length == 1) {
+            return element;
+        }
+        elements.push(element);
+    }
+    return elements;
+};
+
+Monitor.Util.getViewportElement = function() {
+    var viewportElement = arguments.callee.viewportElement;
+    if (viewportElement == undefined) {
+        viewportElement = (Monitor.BROWSER_NAME == "msie" &&
+            document.compatMode != 'CSS1Compat') ? document.body :
+            document.documentElement;
+        arguments.callee.viewportElement = viewportElement;
+    }
+    return viewportElement;
+};
+
+Monitor.Util.isArray = function(a) {
+    return (Object.prototype.toString.call(a) === '[object Array]');
 };
