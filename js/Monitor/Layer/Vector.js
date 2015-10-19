@@ -60,9 +60,9 @@ Monitor.Layer.Vector = Monitor.Class(Monitor.Layer, {
 	},
 	
 	redraw: function() {
-		var feature;
 		this.renderer.erase();
-		for(var i = 0; i < this.features.length; i++) {
+		var len = this.features.length;
+		for(var i = 0; i < len; i++) {
 			this.features[i].draw();
 		}
 	},

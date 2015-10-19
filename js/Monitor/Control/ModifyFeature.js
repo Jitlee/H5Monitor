@@ -44,6 +44,29 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 				this.select(feature);
 			}
 		}
+		
+		var layers = [];
+		var selectedLength = this.selectedFeatures.length;
+		var selectedFeature;
+		for(var i = 0; i < selectedLength; i++) {
+			selectedFeature = this.selectedFeatures[i];
+			selectedFeature._layer = selectedFeature.layer;
+			selectedFeature.layer = this.layer;
+			if(!Monitor.Array.contains(layers, selectedFeature.layer)) {
+				layers.push(selectedFeature._layer);
+			}
+		}
+		
+		this.layer.renderer.erase();
+		for(var i = 0; i < layers.length; i++) {
+			layers[i].redraw();
+		}
+		
+		var __len__ = this.selectedFeatures.length;
+		for(var i = 0; i < __len__; i++) {
+			this.selectedFeatures[i].draw();
+		}
+		
 	},
 	
 	dragmove: function(xy) {
@@ -55,35 +78,37 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 		var __features__;
 		var feature;
 		var layers = [];
+		this.layer.renderer.erase();
 		for(var i = 0; i < len; i++) {
 			feature = features[i];
 			feature.geometry.move(offsetX, offsetY);
+			feature.draw();
 			__features__ = feature.__features__;
-			
-			if(!Monitor.Array.contains(layers, feature.layer) && layer) {
-				layers.push(feature.layer);
-			}
-			
 			if(__features__) {
 				for(var j = 0; j < __features__.length; j++) {
 					__features__[j].geometry.move(offsetX, offsetY);
+					__features__[j].draw();
 				}
 			}
 		}
-		
-		for(var i = 0; i < layers.length; i++) {
-			if(layers[i]) {
-				layers[i].redraw();
-			}
-		}
 		layers = null;
-		this.layer.redraw();
 		
 		this.locked = false;
 	},
 	
 	dragend: function(xy) {
-//		console.log("弹起: x: " + xy.x + ", y: " + xy.y);
+		var layers = [];
+		for(var i = 0; i < this.selectedFeatures.length; i++) {
+			this.selectedFeatures[i].layer = this.selectedFeatures[i]._layer;
+			if(!Monitor.Array.contains(layers, this.selectedFeatures[i].layer)) {
+				layers.push(this.selectedFeatures[i].layer);
+			}
+		}
+		
+		for(var i = 0; i < layers.length; i++) {
+			layers[i].redraw();
+		}
+		this.layer.redraw();
 	},
 	
 	select: function(feature) {
