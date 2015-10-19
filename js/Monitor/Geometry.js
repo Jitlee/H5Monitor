@@ -9,7 +9,8 @@ Monitor.Geometry = Monitor.Class({
 	_top: 0,
 	_right:0,
 	_bottom:0,
-	
+	minWidth: 20,
+	minHeight:20,
 	bounds: null,
 	init: function(options) {
 		Monitor.Util.extend(this, options);
@@ -36,6 +37,11 @@ Monitor.Geometry = Monitor.Class({
 	move: function(x, y) {
 		this.x += x;
 		this.y += y;
+	},
+	
+	resize: function(w, h) {
+		this.width += w;
+		this.height += h;
 	},
 	
 	getBounds: function() {

@@ -4,6 +4,8 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 	layers: null,
 	selectedFeatures: null,
 	locked: false,
+	
+	resizeFeature:null,
 	init: function(layers, options) {
 		Monitor.	Control.prototype.init.apply(this, [options]);
 		if(!Monitor.Util.isArray(layers)) {
@@ -27,8 +29,10 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 		
 		var feature = this.layer.getFeatureFromXY(xy);
 		if(!feature) {
-			for(var i = this.map.layers.length - 1; !feature && i > -1; i--) {
-				for(var j = 0; j < this.layers.length; j++) {
+			var len1 = this.map.layers.length;
+			for(var i = len1 - 1; !feature && i > -1; i--) {
+				var len2 = this.layers.length;
+				for(var j = 0; j < len2; j++) {
 					if(this.map.layers[i] == this.layers[j]) {
 						feature = this.layers[j].getFeatureFromXY(xy);
 						if(feature) {
@@ -40,9 +44,16 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 			// TODO: 实现多选
 			this.unselectAll(feature);
 			
-			if(feature) {
-				this.select(feature);
+			if(!feature) {
+				return;
 			}
+			if(!Monitor.Array.contains(this.selectedFeatures, feature)) {
+				this.select(feature);
+			} else {
+				console.error("有重复选择控件");
+			}
+		} else {
+			feature = feature.__parent__;
 		}
 		
 		var layers = [];
@@ -62,36 +73,35 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 			layers[i].redraw();
 		}
 		
-		var __len__ = this.selectedFeatures.length;
-		for(var i = 0; i < __len__; i++) {
-			this.selectedFeatures[i].draw();
+		var selectedLength = this.selectedFeatures.length;
+		var __len__;
+		var __features__;
+		for(var i = 0; i < selectedLength; i++) {
+			__features__ = this.selectedFeatures[i].__features__;
+			__len__ = __features__.length;
+			for(var j = 0; j < __len__; j++) {
+				__features__[j].draw();
+			}
 		}
 		
+		this.resizeFeature = null;
+		__features__ = feature.__features__;
+		__len__ = __features__.length;
+		for(var i = __len__ - 1; i > 0; i--) {
+			if(__features__[i].geometry.isPointInRange(xy.x, xy.y)) {
+				this.resizeFeature = __features__[i];
+				break;
+			}
+		}
 	},
 	
 	dragmove: function(xy) {
 		this.locked = true;
-		var offsetX = xy.x - this.handler.last.x;
-		var offsetY = xy.y - this.handler.last.y;
-		var features = this.selectedFeatures;
-		var len = features.length;
-		var __features__;
-		var feature;
-		var layers = [];
-		this.layer.renderer.erase();
-		for(var i = 0; i < len; i++) {
-			feature = features[i];
-			feature.geometry.move(offsetX, offsetY);
-			feature.draw();
-			__features__ = feature.__features__;
-			if(__features__) {
-				for(var j = 0; j < __features__.length; j++) {
-					__features__[j].geometry.move(offsetX, offsetY);
-					__features__[j].draw();
-				}
-			}
+		if(this.resizeFeature) {
+			this.resizeFeatures(xy);
+		} else {
+			this.moveFeatures(xy);
 		}
-		layers = null;
 		
 		this.locked = false;
 	},
@@ -109,6 +119,101 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 			layers[i].redraw();
 		}
 		this.layer.redraw();
+		this.resizeFeature = null;
+	},
+	
+	moveFeatures: function(xy) {
+		var offsetX = xy.x - this.handler.last.x;
+		var offsetY = xy.y - this.handler.last.y;
+		var features = this.selectedFeatures;
+		var len = features.length;
+		var __features__;
+		var __len__;
+		var feature;
+		this.layer.renderer.erase();
+		for(var i = 0; i < len; i++) {
+			feature = features[i];
+			feature.geometry.move(offsetX, offsetY);
+			feature.draw();
+			__features__ = feature.__features__;
+			__len__ = __features__.length;
+			for(var j = 0; j < __len__; j++) {
+				__features__[j].geometry.move(offsetX, offsetY);
+				__features__[j].draw();
+			}
+		}
+	},
+	
+	resizeFeatures: function(xy) {
+		var parent = this.resizeFeature.__parent__;
+		var resizeMode = this.resizeFeature.__index__;
+		var offsetX = 0;
+		var offsetY = 0;
+		var offsetWidth = xy.x - this.handler.last.x;
+		var offsetHeight = xy.y - this.handler.last.y;
+		var isSquare = true; // 正方形的
+		if(isSquare) {
+			var fitChange;
+			switch(resizeMode) {
+				case 1:
+					fitChange = (offsetWidth + offsetHeight) * 0.5;
+					offsetX = offsetY = fitChange; 
+					offsetWidth = offsetHeight = -offsetX; 
+					break;
+				case 2:
+					fitChange = (offsetWidth - offsetHeight) * 0.5;
+					offsetHeight = offsetWidth = fitChange;
+					offsetY = -fitChange;
+					break;
+				case 3:
+					fitChange = (offsetWidth + offsetHeight) * 0.5;
+					offsetWidth = offsetHeight = fitChange; 
+					break;
+				case 4:
+					fitChange = (offsetHeight - offsetWidth) * 0.5;
+					offsetHeight = offsetWidth = fitChange;
+					offsetX = -fitChange;
+					break;
+				default:
+					break;
+			}
+		} else {
+			var isLeft = xy.x < (parent.geometry.x + parent.geometry.width / 2);
+			var isTop = xy.y < (parent.geometry.y + parent.geometry.height / 2);
+			if(isLeft) {
+				offsetX = offsetWidth;
+				offsetWidth = -offsetX;
+			}
+			if(isTop) {
+				offsetY = offsetHeight;
+				offsetHeight = -offsetY;
+			}
+		}
+		
+		
+		var features = this.selectedFeatures;
+		var len = features.length;
+		var __features__;
+		var feature;
+		this.layer.renderer.erase();
+		for(var i = 0; i < len; i++) {
+			feature = features[i];
+			feature.geometry.resize(offsetWidth, offsetHeight);
+			feature.geometry.move(offsetX, offsetY);
+			feature.draw();
+			__features__ = feature.__features__;
+			__features__[0].geometry.resize(offsetWidth, offsetHeight);
+			__features__[0].geometry.move(offsetX, offsetY);
+			__features__[0].draw();
+			__features__[1].geometry.move(offsetX, offsetY);
+			__features__[1].draw();
+			__features__[2].geometry.move(offsetWidth + offsetX, offsetY);
+			__features__[2].draw();
+			__features__[3].geometry.move(offsetWidth + offsetX, offsetHeight + offsetY);
+			__features__[3].draw();
+			__features__[4].geometry.move(offsetX, offsetHeight + offsetY);
+			__features__[4].draw();
+		}
 	},
 	
 	select: function(feature) {
@@ -130,26 +235,37 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 			x: x, y: y, width: width, height:height,pen: pen1
 		});
 		var f0 = new Monitor.Feature.Vector(g0);
+		f0.__parent__ = feature;
+		f0.__index__ = 0;
 		
-		var g1 = new Monitor.Geometry.Rectangle({
+		
+		var g1 = new Monitor.Geometry.Rectangle({ // 左上
 			x: x - size / 2, y: y - size / 2, width: size, height:size,pen: pen2
 		});
 		var f1 = new Monitor.Feature.Vector(g1);
+		f1.__parent__ = feature;
+		f1.__index__ = 1;
 		
-		var g2 = new Monitor.Geometry.Rectangle({
+		var g2 = new Monitor.Geometry.Rectangle({ // 右上
 			x: x + width - size / 2, y: y - size / 2, width: size, height:size,pen: pen2
 		});
-		var f2 = new Monitor.Feature.Vector(g2);
+		var f2 = new Monitor.Feature.Vector(g2, { index:2 });
+		f2.__parent__ = feature;
+		f2.__index__ = 2;
 		
-		var g3 = new Monitor.Geometry.Rectangle({
+		var g3 = new Monitor.Geometry.Rectangle({ // 右下
 			x: x + width - size / 2, y: y + height - size / 2, width: size, height:size,pen: pen2
 		});
-		var f3 = new Monitor.Feature.Vector(g3);
+		var f3 = new Monitor.Feature.Vector(g3, { index:3 });
+		f3.__parent__ = feature;
+		f3.__index__ = 3;
 		
-		var g4 = new Monitor.Geometry.Rectangle({
+		var g4 = new Monitor.Geometry.Rectangle({ // 左下
 			x: x - size / 2, y: y + height - size / 2, width: size, height:size,pen: pen2
 		});
-		var f4 = new Monitor.Feature.Vector(g4);
+		var f4 = new Monitor.Feature.Vector(g4, { index:4 });
+		f4.__parent__ = feature;
+		f4.__index__ = 4;
 		
 		feature.__features__ = [f0, f1, f2, f3, f4];
 		
