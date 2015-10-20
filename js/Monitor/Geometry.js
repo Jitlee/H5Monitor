@@ -4,13 +4,15 @@ Monitor.Geometry = Monitor.Class({
 	height:0,
 	x: 0,
 	y: 0,
+	backgroundColor: "#fff",
+	foregroundColor: "#333",
 	
 	_left: 0,
 	_top: 0,
 	_right:0,
 	_bottom:0,
-	minWidth: 20,
-	minHeight:20,
+	minWidth: 50,
+	minHeight:50,
 	bounds: null,
 	init: function(options) {
 		Monitor.Util.extend(this, options);

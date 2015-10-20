@@ -2,6 +2,8 @@ Temprary = Monitor.Class(Monitor.Geometry, {
 	min: 0,
 	max: 100,
 	value: 0,
+	backgroundColor: "#ccc",
+	title: "指示器",
 	
 	init: function(options) {
 		Monitor.Geometry.prototype.init.apply(this, arguments);
@@ -15,7 +17,7 @@ Temprary = Monitor.Class(Monitor.Geometry, {
 		var style1 = { stroke: "#333", strokeThickness: 1 };
 		var style2 = { stroke: "#eee", strokeThickness: 1 };
 		
-		renderer.drawRectangle({ fill: "#ccc" }, 0,0,w,h);
+		renderer.drawRectangle({ fill: this.backgroundColor }, 0,0,w,h);
 		
 		renderer.drawLine({ stroke: "#fff", strokeThickness: 5 },0,0,w,0);
 		renderer.drawLine({ stroke: "#fff", strokeThickness: 5 },0,0,0,h);
@@ -38,7 +40,7 @@ Temprary = Monitor.Class(Monitor.Geometry, {
 			renderer.drawLine(style2,x1,y2 + preHeight*i,i%4==0?x3:x2,y2 + preHeight*i);
 		}
 		
-		renderer.drawText({ fill:"#333", font: w*0.08+ "px 宋体" }, "指示表", w*0.5, h * 0.90, -0.5, 0.5);
+		renderer.drawText({ fill:this.foregroundColor, font: w*0.08+ "px 宋体" }, this.title, w*0.5, h * 0.90, -0.5, 0.5);
 		
 		this.getBounds();
 	},

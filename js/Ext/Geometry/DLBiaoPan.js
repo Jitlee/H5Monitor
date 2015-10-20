@@ -2,6 +2,8 @@ DLBiaoPan = Monitor.Class(Monitor.Geometry, {
 	min: 0,
 	max: 100,
 	value: 0,
+	backgroundColor: "#ddd",
+	title: "仪表",
 	
 	init: function(options) {
 		Monitor.Geometry.prototype.init.apply(this, arguments);
@@ -12,7 +14,7 @@ DLBiaoPan = Monitor.Class(Monitor.Geometry, {
 		var w = this.width;
 		var h = this.height;
 		
-		renderer.drawRectangle({ fill: "#ddd" }, 0,0,w,h);
+		renderer.drawRectangle({ fill: this.backgroundColor }, 0,0,w,h);
 		
 		renderer.drawLine({ stroke: "#eee", strokeThickness: 3 },0,0,w,0);
 		renderer.drawLine({ stroke: "#eee", strokeThickness: 3 },0,0,0,h);
@@ -29,7 +31,7 @@ DLBiaoPan = Monitor.Class(Monitor.Geometry, {
 		
 		renderer.drawCircle({ fill: "#333" }, w*0.5, h*0.5, w*0.02);
 		
-		renderer.drawText({ fill:"#333", font: w*0.08+ "px 宋体" }, "仪表", w*0.5, h * 0.75, -0.5, 0.5);
+		renderer.drawText({ fill:this.foregroundColor, font: w*0.08+ "px 宋体" }, this.title, w*0.5, h * 0.75, -0.5, 0.5);
 		
 		var start = 0.75*Math.PI;
 		var degree, preDegree;

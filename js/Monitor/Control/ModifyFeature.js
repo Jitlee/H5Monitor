@@ -2,10 +2,12 @@
 Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 	layer: null,
 	layers: null,
+	selectedFeature: null,
 	selectedFeatures: null,
 	locked: false,
-	
+	knobSize: 20,
 	resizeFeature:null,
+	events: null,
 	init: function(layers, options) {
 		Monitor.	Control.prototype.init.apply(this, [options]);
 		if(!Monitor.Util.isArray(layers)) {
@@ -20,6 +22,8 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 		
 		this.layer = new Monitor.Layer.Vector("编辑图层");
 		this.selectedFeatures = [];
+		
+		this.events = new Monitor.Events(this);
 	},
 	
 	dragstart: function(xy) {
@@ -45,10 +49,12 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 			this.unselectAll(feature);
 			
 			if(!feature) {
+				this.events.trigger("featureunselected");
 				return;
 			}
 			if(!Monitor.Array.contains(this.selectedFeatures, feature)) {
 				this.select(feature);
+				this.events.trigger("featureselected", feature);
 			} else {
 				console.error("有重复选择控件");
 			}
@@ -137,6 +143,8 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 			feature.draw();
 			__features__ = feature.__features__;
 			__len__ = __features__.length;
+			
+			this.events.trigger("featuremodified", feature);
 			for(var j = 0; j < __len__; j++) {
 				__features__[j].geometry.move(offsetX, offsetY);
 				__features__[j].draw();
@@ -196,22 +204,30 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 		var __features__;
 		var feature;
 		this.layer.renderer.erase();
+		var _offsetX, _offsetY, _offsetWidth, _offsetHeight;
 		for(var i = 0; i < len; i++) {
 			feature = features[i];
-			feature.geometry.resize(offsetWidth, offsetHeight);
-			feature.geometry.move(offsetX, offsetY);
+			_offsetX = 0, _offsetY = 0, _offsetWidth = 0, _offsetHeight = 0;
+			if(feature.geometry.width + offsetWidth > feature.geometry.minWidth
+				&& feature.geometry.height + offsetHeight > feature.geometry.minHeight) {
+				_offsetX = offsetX, _offsetY = offsetY, _offsetWidth = offsetWidth, _offsetHeight = offsetHeight;
+			}
+				
+			feature.geometry.resize(_offsetWidth, _offsetHeight);
+			feature.geometry.move(_offsetX, _offsetY);
 			feature.draw();
+			this.events.trigger("featuremodified", feature);
 			__features__ = feature.__features__;
-			__features__[0].geometry.resize(offsetWidth, offsetHeight);
-			__features__[0].geometry.move(offsetX, offsetY);
+			__features__[0].geometry.resize(_offsetWidth, _offsetHeight);
+			__features__[0].geometry.move(_offsetX, _offsetY);
 			__features__[0].draw();
-			__features__[1].geometry.move(offsetX, offsetY);
+			__features__[1].geometry.move(_offsetX, _offsetY);
 			__features__[1].draw();
-			__features__[2].geometry.move(offsetWidth + offsetX, offsetY);
+			__features__[2].geometry.move(_offsetWidth + _offsetX, _offsetY);
 			__features__[2].draw();
-			__features__[3].geometry.move(offsetWidth + offsetX, offsetHeight + offsetY);
+			__features__[3].geometry.move(_offsetWidth + _offsetX, _offsetHeight + _offsetY);
 			__features__[3].draw();
-			__features__[4].geometry.move(offsetX, offsetHeight + offsetY);
+			__features__[4].geometry.move(_offsetX, _offsetHeight + _offsetY);
 			__features__[4].draw();
 		}
 	},
@@ -225,7 +241,7 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 		var pen2 = new Monitor.Pen({
 			fill: "#4a86e8"
 		});
-		var size = 10;
+		var size = this.knobSize;
 		var x = feature.geometry.x;
 		var y = feature.geometry.y;
 		var width = feature.geometry.width;
@@ -239,28 +255,28 @@ Monitor.Control.ModifyFeature =  Monitor.Class(Monitor.Control, {
 		f0.__index__ = 0;
 		
 		
-		var g1 = new Monitor.Geometry.Rectangle({ // 左上
+		var g1 = new Monitor.Geometry.Circle({ // 左上
 			x: x - size / 2, y: y - size / 2, width: size, height:size,pen: pen2
 		});
 		var f1 = new Monitor.Feature.Vector(g1);
 		f1.__parent__ = feature;
 		f1.__index__ = 1;
 		
-		var g2 = new Monitor.Geometry.Rectangle({ // 右上
+		var g2 = new Monitor.Geometry.Circle({ // 右上
 			x: x + width - size / 2, y: y - size / 2, width: size, height:size,pen: pen2
 		});
 		var f2 = new Monitor.Feature.Vector(g2, { index:2 });
 		f2.__parent__ = feature;
 		f2.__index__ = 2;
 		
-		var g3 = new Monitor.Geometry.Rectangle({ // 右下
+		var g3 = new Monitor.Geometry.Circle({ // 右下
 			x: x + width - size / 2, y: y + height - size / 2, width: size, height:size,pen: pen2
 		});
 		var f3 = new Monitor.Feature.Vector(g3, { index:3 });
 		f3.__parent__ = feature;
 		f3.__index__ = 3;
 		
-		var g4 = new Monitor.Geometry.Rectangle({ // 左下
+		var g4 = new Monitor.Geometry.Circle({ // 左下
 			x: x - size / 2, y: y + height - size / 2, width: size, height:size,pen: pen2
 		});
 		var f4 = new Monitor.Feature.Vector(g4, { index:4 });
